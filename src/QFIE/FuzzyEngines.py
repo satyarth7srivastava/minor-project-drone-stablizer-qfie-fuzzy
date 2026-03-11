@@ -18,6 +18,20 @@ from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 # ---------------------------------------------------------------------------
 # Membership-function helpers (so we don't need scikit-fuzzy)
 # ---------------------------------------------------------------------------
+def gaussmf(x, c, sigma):
+    """Gaussian membership function.
+    
+    Parameters
+    ----------
+    x : np.ndarray – universe of discourse
+    c : float      – center of the Gaussian
+    sigma : float  – standard deviation
+    
+    Returns
+    -------
+    np.ndarray : membership values (0..1)
+    """
+    return np.exp(-0.5 * ((x - c) / sigma) ** 2)
 
 def trimf(x, abc):
     """Triangular membership function.
