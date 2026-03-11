@@ -335,3 +335,20 @@ class QuantumFuzzyEngine:
             crisp_output = float(np.sum(universe * aggregated) / total)
 
         return crisp_output, output_strengths
+
+def execute_normalized(self, n_shots=1024, normalize=False):
+    """
+    Execute the QFIE and optionally normalize output strengths.
+    
+    Returns
+    -------
+    crisp_output : float
+    output_strengths : dict
+    """
+    crisp_output, output_strengths = self.execute(n_shots=n_shots)
+    if normalize:
+        total = sum(output_strengths.values())
+        if total > 1e-12:
+            for k in output_strengths:
+                output_strengths[k] /= total
+    return crisp_output, output_strengths
