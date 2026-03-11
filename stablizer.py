@@ -215,3 +215,68 @@ if __name__ == "__main__":
 
     # Scenario: drone is 15 cm below target, initially stationary
     controller.run_simulation(error=-15, velocity=0, steps=150)
+
+# ====================================================================== #
+# Extra Experiments / Demonstrations (does NOT affect main simulation)
+# ====================================================================== #
+
+if __name__ == "__main__":
+    controller = DroneAltitudeController()
+
+    # ── Original scenario ──────────────────────────
+    controller.run_simulation(error=-15, velocity=0, steps=150)
+
+    # ── Extra scenarios to show robustness ────────
+    extra_scenarios = [
+        {"error": -20, "velocity": 0},
+        {"error": 25,  "velocity": 5},
+        {"error": 0,   "velocity": 10},
+        {"error": -30, "velocity": -8},
+    ]
+
+    for idx, s in enumerate(extra_scenarios):
+        print(f"\n\n=== Extra Scenario {idx+1} ===")
+        print(f"Initial error: {s['error']} cm, Initial rate: {s['velocity']} cm/s")
+        errors, velocities, thrusts = [], [], []
+
+        dt = 0.05
+        error, velocity = s['error'], s['velocity']
+
+        for t in range(50):  # simulate shorter 50 steps for demo
+            import time
+            start = time.time()
+            thrust = controller.compute_thrust(error, velocity)
+            end = time.time()
+            # Fuzzified input debug (first 3 steps only)
+            if t < 3:
+                fuzz_inputs = controller.qfie._fuzzify({
+                    'altitude_error': error,
+                    'error_rate': velocity
+                })
+                print(f"Step {t}: Fuzzified Inputs:", fuzz_inputs)
+            print(f"Step {t:2d}: error={error:+6.2f} cm | rate={velocity:+6.2f} cm/s | thrust={thrust:+6.2f} % | inference={(end-start)*1000:.2f} ms")
+
+            errors.append(error)
+            velocities.append(velocity)
+            thrusts.append(thrust)
+
+            # Simple dynamics (same as original)
+            acceleration = error - thrust - 0.5 * velocity
+            velocity += acceleration * dt
+            error    += velocity * dt
+
+        # ── Plot short demonstration
+        import matplotlib.pyplot as plt
+        time_axis = range(len(errors))
+        plt.figure(figsize=(10,5))
+        plt.plot(time_axis, errors, label='Error', color='royalblue')
+        plt.plot(time_axis, velocities, label='Rate', color='darkorange')
+        plt.plot(time_axis, thrusts, label='Thrust', color='seagreen')
+        plt.title(f"Extra Scenario {idx+1} — Quantum Fuzzy Hover")
+        plt.xlabel("Time Step")
+        plt.ylabel("Value")
+        plt.grid(True, alpha=0.3)
+        plt.axhline(0, color='black', linestyle='--', alpha=0.4)
+        plt.legend()
+        plt.tight_layout()
+        plt.show()
